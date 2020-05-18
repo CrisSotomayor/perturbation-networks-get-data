@@ -6,9 +6,11 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 
-AA = ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y']
+
 
 def GetData(path, prot, mutations):
+    AA = ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y']
+    
     #generar grafica de proteina original
     original_prot = bg.Pmolecule(path+prot+".pdb")
     original = original_prot.network()
