@@ -4,9 +4,10 @@ import biographs as bg
 import numpy as np
 import pandas as pd
 import networkx as nx
+import csv
 
 
-def GetData(path, prot, mutations, csv_path=None):
+def GetData(path, prot, mutations, csv_path = None):
     """Get data from amino acid mutation perturbation networks as CSV files.
 
     Parameters:
@@ -27,26 +28,38 @@ def GetData(path, prot, mutations, csv_path=None):
     # Sorted list of one letter amino acids
     AA = list(Bio.PDB.Polypeptide.aa1)
     N = len(AA)  # Number of amino acids
-    # Generate network of original pdb file
+    # Generate molecule of original pdb file
     original_prot = bg.Pmolecule(os.path.join(path, f"{prot}.pdb"))
-    original = original_prot.network()
-    original_matrix = nx.adjacency_matrix(original).toarray()
     # The range of thresholds will define the networks
     thresholds = [round(i, 1) for i in np.linspace(3, 10, 71)]
     # Create dir to save resulting csv files if not specified
-    # error si no existen?
-    if csv_path is None:
+    if csv_path == None:
         csv_path = os.path.join(path, "perturbation_network_data")
         os.makedirs(csv_path)
+    # Check if path and csv_path exist
+    assert os.path.exists(path), "Directory doesn't exist."
+    assert os.path.exists(csv_path), "Directory doesn't exist."
+    # Array to save data from original protein network
+    original_data = np.array((4, len(thresholds)))
 
     # For each threshold we iterate over all mutations
-    for threshold in thresholds:
+    for i, threshold in enumerate(thresholds):
         M = len(mutations.keys())  # Number of mutated positions
         cols = list(mutations.keys())
         nodes = np.zeros((N, M))
         edges = np.zeros((N, M))
         weights = np.zeros((N, M))
         distance = np.zeros((N, M))
+
+        # Generate network for original graph with threshold
+        original = original_prot.network(cutoff=threshold)
+        original_matrix = nx.adjacency_matrix(original).toarray()
+        
+        # Saving data from original network
+        original_data[0][i] = len(original.nodes())
+        original_data[1][i] = len(original.edges())
+        original_data[2][i] = original.size(weight='weight')
+        original_data[3][i] = nx.diameter(original)
 
         for index, position in enumerate(mutations.keys()):
             for mutation in mutations[position]:
@@ -69,20 +82,45 @@ def GetData(path, prot, mutations, csv_path=None):
                 aa_index = AA.index(mutation[-1])
 
                 # Information obtained from perturbation network
-                nodes[aa_index][index= len(perturbation_network.nodes())
-                edges[aa_index][index]= len(perturbation_network.edges())
-                weights[aa_index][index]= perturbation_network.size(weight='weight')
-                distance[aa_index][index]= nx.diameter(perturbation_network)
+                nodes[aa_index][index]
+                          = len(perturbation_network.nodes())
+                edges[aa_index][index]
+                          = len(perturbation_network.edges())
+                weights[aa_index][index]
+                          = perturbation_network.size(weight='weight')
+                distance[aa_index][index]
+                          = nx.diameter(perturbation_network)
 
         # Save data arrays as csv files in csv_path
-        # Usamos DataFrames? creo que es mas rapido con np.savetxt pero esta
-        # dificil ponerle los aminoacidos al inicio de las filas
-        pd.DataFrame(nodes, columns=cols, index=AA).to_csv(
-            os.path.join(csv_path, f"{prot}_{threshold}_nodes.csv"))
-        pd.DataFrame(edges, columns=cols, index=AA).to_csv(
-            os.path.join(csv_path, f"{prot}_{threshold}_edges.csv"))
-        pd.DataFrame(distance, columns=cols, index=AA).to_csv(
-            os.path.join(csv_path, f"{prot}_{threshold}_distance.csv"))
-        pd.DataFrame(weights, columns=cols, index=AA).to_csv(
-            os.path.join(csv_path, f"{prot}_{threshold}_weights.csv"))
+        with open(os.path.join(csv_path, f"{prot}_{threshold}_nodes.csv"),
+         'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(cols)
+            writer.writerows(nodes)
+        with open(os.path.join(csv_path, f"{prot}_{threshold}_edges.csv"),
+         'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(cols)
+            writer.writerows(edges)
+        with open(os.path.join(csv_path, f"{prot}_{threshold}_weights.csv"),
+         'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(cols)
+            writer.writerows(weights)
+        with open(os.path.join(csv_path, f"{prot}_{threshold}_distance.csv"),
+         'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(cols)
+            writer.writerows(distance)
+
+        # Save array from original data
+        original_data = np.vstack([thresholds, original_data]) # add thresholds
+        original_data = np.transpose(original_data) # to add names as header
+
+        with open(os.path.join(csv_path, f"{prot}_original.csv"),
+         'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(
+                ['threshold', 'nodes', 'edges', 'weights', 'distance'])
+            writer.writerows(original_data)
     return
