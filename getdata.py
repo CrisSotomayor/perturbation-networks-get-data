@@ -6,7 +6,7 @@ import pandas as pd
 import networkx as nx
 
 
-def GetData(path, prot, mutations, csv_path = None):
+def GetData(path, prot, mutations, csv_path=None):
     """Get data from amino acid mutation perturbation networks as CSV files.
 
     Parameters:
@@ -35,7 +35,7 @@ def GetData(path, prot, mutations, csv_path = None):
     thresholds = [round(i, 1) for i in np.linspace(3, 10, 71)]
     # Create dir to save resulting csv files if not specified
     # error si no existen?
-    if csv_path == None:
+    if csv_path is None:
         csv_path = os.path.join(path, "perturbation_network_data")
         os.makedirs(csv_path)
 
@@ -69,24 +69,20 @@ def GetData(path, prot, mutations, csv_path = None):
                 aa_index = AA.index(mutation[-1])
 
                 # Information obtained from perturbation network
-                nodes[aa_index][index]
-                          = len(perturbation_network.nodes())
-                edges[aa_index][index]
-                          = len(perturbation_network.edges())
-                weights[aa_index][index]
-                          = perturbation_network.size(weight='weight')
-                distance[aa_index][index]
-                          = nx.diameter(perturbation_network)
+                nodes[aa_index][index= len(perturbation_network.nodes())
+                edges[aa_index][index]= len(perturbation_network.edges())
+                weights[aa_index][index]= perturbation_network.size(weight='weight')
+                distance[aa_index][index]= nx.diameter(perturbation_network)
 
         # Save data arrays as csv files in csv_path
         # Usamos DataFrames? creo que es mas rapido con np.savetxt pero esta
         # dificil ponerle los aminoacidos al inicio de las filas
-        pd.DataFrame(nodes, columns=cols, index = AA).to_csv(
-                    os.path.join(csv_path, f"{prot}_{threshold}_nodes.csv"))
-        pd.DataFrame(edges, columns=cols, index = AA).to_csv(
-                    os.path.join(csv_path, f"{prot}_{threshold}_edges.csv"))
-        pd.DataFrame(distance, columns=cols, index = AA).to_csv(
-                    os.path.join(csv_path, f"{prot}_{threshold}_distance.csv"))
-        pd.DataFrame(weights, columns=cols, index = AA).to_csv(
-                    os.path.join(csv_path, f"{prot}_{threshold}_weights.csv"))
+        pd.DataFrame(nodes, columns=cols, index=AA).to_csv(
+            os.path.join(csv_path, f"{prot}_{threshold}_nodes.csv"))
+        pd.DataFrame(edges, columns=cols, index=AA).to_csv(
+            os.path.join(csv_path, f"{prot}_{threshold}_edges.csv"))
+        pd.DataFrame(distance, columns=cols, index=AA).to_csv(
+            os.path.join(csv_path, f"{prot}_{threshold}_distance.csv"))
+        pd.DataFrame(weights, columns=cols, index=AA).to_csv(
+            os.path.join(csv_path, f"{prot}_{threshold}_weights.csv"))
     return
