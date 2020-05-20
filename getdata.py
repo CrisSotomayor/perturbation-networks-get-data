@@ -7,7 +7,7 @@ import networkx as nx
 import csv
 
 
-def GetData(path, prot, mutations, csv_path = None):
+def GetData(path, prot, mutations, csv_path=None):
     """Get data from amino acid mutation perturbation networks as CSV files.
 
     Parameters:
@@ -33,7 +33,7 @@ def GetData(path, prot, mutations, csv_path = None):
     # The range of thresholds will define the networks
     thresholds = [round(i, 1) for i in np.linspace(3, 10, 71)]
     # Create dir to save resulting csv files if not specified
-    if csv_path == None:
+    if csv_path is None:
         csv_path = os.path.join(path, "perturbation_network_data")
         os.makedirs(csv_path)
     # Check if path and csv_path exist
@@ -54,7 +54,6 @@ def GetData(path, prot, mutations, csv_path = None):
         # Generate network for original graph with threshold
         original = original_prot.network(cutoff=threshold)
         original_matrix = nx.adjacency_matrix(original).toarray()
-        
         # Saving data from original network
         original_data[0][i] = len(original.nodes())
         original_data[1][i] = len(original.edges())
@@ -82,14 +81,10 @@ def GetData(path, prot, mutations, csv_path = None):
                 aa_index = AA.index(mutation[-1])
 
                 # Information obtained from perturbation network
-                nodes[aa_index][index]
-                          = len(perturbation_network.nodes())
-                edges[aa_index][index]
-                          = len(perturbation_network.edges())
-                weights[aa_index][index]
-                          = perturbation_network.size(weight='weight')
-                distance[aa_index][index]
-                          = nx.diameter(perturbation_network)
+                nodes[aa_index][index] = len(perturbation_network.nodes())
+                edges[aa_index][index] = len(perturbation_network.edges())
+                weights[aa_index][index] = perturbation_network.size(weight='weight')
+                distance[aa_index][index] = nx.diameter(perturbation_network)
 
         # Save data arrays as csv files in csv_path
         with open(os.path.join(csv_path, f"{prot}_{threshold}_nodes.csv"),
@@ -120,7 +115,6 @@ def GetData(path, prot, mutations, csv_path = None):
         with open(os.path.join(csv_path, f"{prot}_original.csv"),
          'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(
-                ['threshold', 'nodes', 'edges', 'weights', 'distance'])
+            writer.writerow(['threshold', 'nodes', 'edges', 'weights', 'distance'])
             writer.writerows(original_data)
     return
