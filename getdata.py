@@ -2,7 +2,6 @@ import os
 import Bio.PDB
 import biographs as bg
 import numpy as np
-import pandas as pd
 import networkx as nx
 import csv
 
@@ -83,38 +82,42 @@ def GetData(path, prot, mutations, csv_path=None):
                 # Information obtained from perturbation network
                 nodes[aa_index][index] = len(perturbation_network.nodes())
                 edges[aa_index][index] = len(perturbation_network.edges())
-                weights[aa_index][index] = perturbation_network.size(weight='weight')
+                weights[aa_index][index] = perturbation_network.size(
+                    weight='weight')
                 distance[aa_index][index] = nx.diameter(perturbation_network)
 
         # Save data arrays as csv files in csv_path
         with open(os.path.join(csv_path, f"{prot}_{threshold}_nodes.csv"),
-         'w', newline='') as file:
+                  'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(cols)
             writer.writerows(nodes)
         with open(os.path.join(csv_path, f"{prot}_{threshold}_edges.csv"),
-         'w', newline='') as file:
+                  'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(cols)
             writer.writerows(edges)
         with open(os.path.join(csv_path, f"{prot}_{threshold}_weights.csv"),
-         'w', newline='') as file:
+                  'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(cols)
             writer.writerows(weights)
         with open(os.path.join(csv_path, f"{prot}_{threshold}_distance.csv"),
-         'w', newline='') as file:
+                  'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(cols)
             writer.writerows(distance)
 
         # Save array from original data
-        original_data = np.vstack([thresholds, original_data]) # add thresholds
-        original_data = np.transpose(original_data) # to add names as header
+        original_data = np.vstack(
+            [thresholds, original_data])  # add thresholds
+        original_data = np.transpose(original_data)  # to add names as header
 
         with open(os.path.join(csv_path, f"{prot}_original.csv"),
-         'w', newline='') as file:
+                  'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['threshold', 'nodes', 'edges', 'weights', 'distance'])
+            writer.writerow(
+                ['threshold', 'nodes', 'edges', 'weights', 'distance'])
             writer.writerows(original_data)
-    return
+
+    return None
