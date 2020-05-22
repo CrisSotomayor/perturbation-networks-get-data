@@ -28,7 +28,7 @@ def GetData(path, prot, mutations, csv_path=None):
     AA = list(Bio.PDB.Polypeptide.aa1)
     N = len(AA)  # Number of amino acids
     M = len(mutations.keys())  # Number of mutated positions
-    cols = list(mutations.keys()) # List of mutated positions
+    cols = list(mutations.keys())  # List of mutated positions
 
     # Generate molecule of original pdb file
     original_prot = bg.Pmolecule(os.path.join(path, f"{prot}.pdb"))
@@ -40,8 +40,8 @@ def GetData(path, prot, mutations, csv_path=None):
         if not os.path.exists(csv_path):
             os.makedirs(csv_path)
     # Check if path and csv_path exist
-    assert os.path.exists(path), "Directory doesn't exist."
-    assert os.path.exists(csv_path), "Directory doesn't exist."
+    assert os.path.exists(path), f"Directory {path} doesn't exist."
+    assert os.path.exists(csv_path), f"Directory {csv_path} doesn't exist."
     # Array to save data from original protein network
     original_data = np.zeros((4, len(thresholds)))
 
@@ -79,6 +79,8 @@ def GetData(path, prot, mutations, csv_path=None):
                     list(nx.isolates(perturbation_network)))
 
                 # Corresponding row in array according to mutation
+                assert mutation[-1] in AA, \
+                    f"{mutation[-1]} not one of {Bio.PDB.Polypeptide.aa1}"
                 aa_index = AA.index(mutation[-1])
 
                 # Information obtained from perturbation network
@@ -103,29 +105,34 @@ def GetData(path, prot, mutations, csv_path=None):
 
     return None
 
+
 def GetNodes(network):
     """ Return number of nodes in network. """
     return len(network.nodes())
+
 
 def GetEdges(network):
     """ Return number of edges in network. """
     return len(network.edges())
 
+
 def GetWeight(network):
     """ Return sum of weights for the edges in network. """
     return network.size(weight='weight')
 
+
 def GetDistance(network):
     """ Return diameter of network, 0 if null graph, max of components if not connected. """
-    if len(network.nodes()) == 0: # If null graph, return 0
+    if len(network.nodes()) == 0:  # If null graph, return 0
         return 0
     elif nx.is_connected(network) == False:  # If not connected, return maximun
         components = [network.subgraph(c).copy()
-                                for c in nx.connected_components(network)]
+                      for c in nx.connected_components(network)]
         diameters = [nx.diameter(c) for c in components]
         return max(diameters)
-    else: # If connected, return diameter
+    else:  # If connected, return diameter
         return nx.diameter(network)
+
 
 def WriteCSV(csv_path, attribute, header, name):
     """ Write CSV file of attribute matrix with header in csv_path. """
