@@ -1,7 +1,7 @@
 import os
 import Bio.PDB
 import Bio.PDB.Polypeptide as pp
-import biographs as bp
+import biographs as bg
 
 def MutationsDict(path, prot, pdbs=True):
     """Get dictionary with lists of mutations per position in protein.
