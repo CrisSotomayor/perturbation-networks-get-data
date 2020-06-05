@@ -312,6 +312,8 @@ def GetDistance(network):
         return nx.diameter(network)
 def WriteCSV(csv_path, attribute, header, name):
     """ Write CSV file of attribute matrix with header in csv_path. """
+    if not os.path.exists(csv_path):
+        os.makedirs(csv_path)
     with open(os.path.join(csv_path, name), 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(header)
@@ -330,7 +332,6 @@ def GetData(protein, mutation, path, threshold):
         threshold (float): threshold to generate network
 
     Uses:
-        original = network of original protein
         original_matrix = matrix from original protein
         nodes, edges, weighst, distance = np arrays to write data in
         positions = list of positions, to get corresponding index to write in
@@ -347,7 +348,8 @@ def GetData(protein, mutation, path, threshold):
     # Obtain the absolute difference in terms of adjacency
     # matrices: the perturbation network.
     current_matrix = nx.adjacency_matrix(current).toarray()
-    difference = np.abs(original_matrix - current_matrix)
+    original_matrix_np = np.ctypeslib.as_array(original_matrix)
+    difference = np.abs(original_matrix_np - current_matrix)
     perturbation_network = nx.from_numpy_array(difference)
 
     # Remove isolates for accurate perturbation network node count
