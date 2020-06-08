@@ -97,7 +97,7 @@ if __name__ == '__main__':
             N = len(AA) # Number of amino acids
             M = len(positions) # Number of mutated positions
 
-            for threshold in thresholds:
+            for i, threshold in enumerate(thresholds):
                 # Create arrays to store data
                 # https://jonasteuwen.github.io/numpy/python/multiprocessing/2017/01/07/multiprocessing-numpy-array.html
                 nodes1 = np.ctypeslib.as_ctypes(np.zeros((N, M)))
