@@ -70,7 +70,7 @@ def GetData(tuple):
 if __name__ == '__main__':
 
     thresholds = [round(i, 1) for i in np.linspace(3, 10, 71)]
-    proteins = ["1nd4", "3dqw", "3s4y", "6r5k"]
+    proteins = ["3s4y", "6r5k"]
 
     home_path = os.path.join(os.getenv("HOME"), "perturbation_networks")
 
