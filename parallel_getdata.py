@@ -142,4 +142,4 @@ if __name__ == '__main__':
             original_data = np.transpose(original_data)  # to add names as header
             header = ['threshold', 'nodes', 'edges', 'weight', 'distance']
             # Write CSV of original data
-            it.WriteCSV(prot_csv_path, original_data, header, f"{prot}_original.csv")
+            it.WriteCSV(prot_csv_path, original_data, header, f"{protein}_original.csv")
