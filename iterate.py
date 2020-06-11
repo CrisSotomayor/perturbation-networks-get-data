@@ -23,7 +23,7 @@ def pdb_model(structure_file, water=False, ions=False):
         True to take into account water molecules in the structure, False
         otherwise.
     ions: boolean (default=False)
-        True to take into account ions in the structure, False otherwise.
+        If False, removes all residues that are not standard amino acids.
 
     Notes
     -----
@@ -58,12 +58,13 @@ def pdb_model(structure_file, water=False, ions=False):
     if not ions:
         for chain in model.get_chains():
             for residue in list(chain):
-                if len(residue.get_unpacked_list()) == 1:
-                    # If residue is single atom, assume ion and remove.
+                # FoldX removes hetatom flags, remove leftover ions and non standard
+                # amino acids
+                if not pp.is_aa(residue, standard=True):
                     chain.detach_child(residue.id)
             if not list(chain):
                 model.detach_child(chain.id)
-
+            
     return model
 
 def label_residue(residue):
@@ -280,7 +281,11 @@ def MutationsList(path, protein):
                 chain = residue.parent.id
                 position = str(residue.id[1])
                 prefix = code+chain+position
-                first_mutation = os.path.join(path, f"{protein}_{prefix+AA[0]}.pdb")
+                if prefix[0] != AA[0]:
+                    first = AA[0]
+                else:
+                    first = AA[1]
+                first_mutation = os.path.join(path, f"{protein}_{prefix+first}.pdb")
                 # Assume if first mutation exists, all mutations do
                 # Excludes mutating residue for itself
                 if os.path.exists(first_mutation):

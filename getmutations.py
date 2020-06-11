@@ -35,7 +35,12 @@ def MutationsDict(path, prot, pdbs=True):
                 position = str(residue.id[1])
                 prefix = code+chain+position
                 if pdbs is True:
-                    first_mutation = os.path.join(path, f"{prot}_{prefix+AA[0]}.pdb")
+                    if prefix[0] != AA[0]:
+                        first = AA[0]
+                    else:
+                        first = AA[1]
+                    first_mutation = os.path.join(path, f"{prot}_{prefix+first}.pdb")
+                    
                     # Assume if first mutation exists, all mutations do
                     # Excludes mutating residue for itself
                     if os.path.exists(first_mutation):
