@@ -64,7 +64,7 @@ def pdb_model(structure_file, water=False, ions=False):
                     chain.detach_child(residue.id)
             if not list(chain):
                 model.detach_child(chain.id)
-            
+
     return model
 
 def label_residue(residue):
@@ -294,6 +294,32 @@ def MutationsList(path, protein):
 
     return mutations, positions
 
+# Get adjacency matrix from residue_adjacency
+def AdjacencyMatrix(model, cutoff=5):
+    """Get adjacency matrix from residue_adjacency dictionary.
+
+    Parameters:
+        model: model returned from pdb_model
+
+    Returns:
+        adjacency_matrix: ndarray, adjacency matrix for model with cutoff
+    """
+    # List with all residues in model, chain:index
+    positions = [label_residue(residue) for residue in model.get_residues()]
+
+    N = len(positions)
+    adjacency_matrix = np.zeros((N,N))
+
+    weighted_adjacency = residue_adjacency(model, cutoff=cutoff)
+
+    for residue in weighted_adjacency:
+        for neighbor in weighted_adjacency[residue]:
+            i = positions.index(residue)
+            j = positions.index(neighbor)
+            adjacency_matrix[i][j] = weighted_adjacency[residue][neighbor]['weight']
+
+    return adjacency_matrix
+
 # Functions to get data, from getdata.py
 def GetNodes(network):
     """ Return number of nodes in network. """
@@ -348,11 +374,11 @@ def GetData(protein, mutation, path, threshold):
     # Generate network for current mutation
     current_path = os.path.join(path, f"{protein}_{mutation}.pdb")
     current_prot = Pmolecule(current_path)
-    current = current_prot.network(cutoff=threshold)
+    current_model = current_prot.model
 
     # Obtain the absolute difference in terms of adjacency
     # matrices: the perturbation network.
-    current_matrix = nx.adjacency_matrix(current).toarray()
+    current_matrix = AdjacencyMatrix(current_model, cuttoff=threshold)
     original_matrix_np = np.ctypeslib.as_array(original_matrix)
     difference = np.abs(original_matrix_np - current_matrix)
     perturbation_network = nx.from_numpy_array(difference)

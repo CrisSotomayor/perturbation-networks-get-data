@@ -36,11 +36,11 @@ def GetData(tuple):
     # Generate network for current mutation
     current_path = os.path.join(path, f"{protein}_{mutation}.pdb")
     current_prot = it.Pmolecule(current_path)
-    current = current_prot.network(cutoff=threshold)
+    current_model = current_prot.model
 
     # Obtain the absolute difference in terms of adjacency
     # matrices: the perturbation network.
-    current_matrix = nx.adjacency_matrix(current).toarray()
+    current_matrix = it.AdjacencyMatrix(current_model, cutoff=threshold)
     original_matrix_np = np.ctypeslib.as_array(original_matrix)
     difference = np.abs(original_matrix_np - current_matrix)
     perturbation_network = nx.from_numpy_array(difference)
@@ -70,7 +70,7 @@ def GetData(tuple):
 if __name__ == '__main__':
 
     thresholds = [round(i, 1) for i in np.linspace(3, 10, 71)]
-    proteins = ["1nd4", "3s4y", "6r5k", "3dqw"]
+    proteins = ["3dqw"]
 
     home_path = os.path.join(os.getenv("HOME"), "perturbation_networks")
 
@@ -112,8 +112,9 @@ if __name__ == '__main__':
 
                 # Generate molecule of original pdb file
                 original_prot = it.Pmolecule(os.path.join(path, f"{protein}.pdb"))
+                original_model = original_prot.model
                 original = original_prot.network(cutoff=threshold)
-                matrix = np.ctypeslib.as_ctypes(nx.adjacency_matrix(original).toarray())
+                matrix = np.ctypeslib.as_ctypes(it.AdjacencyMatrix(original_model, cutoff=threshold))
                 # Shared data for original matrix with threshold
                 original_matrix = sharedctypes.RawArray(matrix._type_, matrix)
 
