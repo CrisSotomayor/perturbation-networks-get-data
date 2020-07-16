@@ -66,42 +66,66 @@ def GetMutations(path, protein, mutations, foldx_path, out_path=None, use_mp=Non
     else:
         if not os.path.exists(out_path):
             os.makedirs(out_path)
-        # Copy original pdb file to out_path
-        original_protein = os.path.join(path, f"{protein}.pdb")
-        shutil.copy(original_protein, out_path)
 
     # Mutations will be made according to :aa:chain:position items in positions,
     # generating an individual list and config file for each, which are necessary
     # to run FoldX BuildModel
-    for position in positions:
-        IndList(out_path, position, mutations[position])
-        ConfigFile(out_path, protein, position)
-
     if use_mp:
+        for position in positions:
+            # Since output FoldX files are named protein_i, we need to store
+            # them separately so they don't overwrite each other
+            current_path = os.path.join(out_path, position)
+            os.makedirs(current_path)
+            IndList(current_path, position, mutations[position])
+            ConfigFile(path, current_path, protein, position)
         with mp.Manager() as manager:
             mutations = manager.dict(mutations)
-            inputs = [(out_path, protein, position, mutations[position], foldx_path)
-                            for position in positions]
+            inputs = [(os.path.join(out_path, position), protein, position,
+                        mutations[position], foldx_path) for position in positions]
             with mp.Pool(use_mp) as pool:
                 pool.starmap(Mutate, inputs)
     else:
         for position in positions:
-            Mutate(out_path, protein, position, mutations[position], foldx_path)
+            IndList(out_path, position, mutations[position])
+            ConfigFile(path, out_path, protein, position)
+            Mutate(out_path, protein, position, mutations[position], foldx_path, use_mp=False)
     return
 
 
-def Mutate(path, protein, prefix, mutations_list, foldx_path):
-    """Call FoldX BuildModel through config_file, rename resulting .pdb files"""
+def Mutate(path, protein, prefix, mutations_list, foldx_path, use_mp=True):
+    """Call FoldX BuildModel through config_file, rename resulting .pdb files,
+    delete files not needed."""
     config_file = os.path.join(path, f"config_{protein}_{prefix}.cfg")
     mutate = f"{foldx_path} -f {config_file}"
     subprocess.check_call(mutate, shell = True)
-    for i, x in enumerate(mutations_list):
-        source = os.path.join(path, f"{protein}_{i+1}.pdb")
-        dest = os.path.join(path, f"{protein}_{x}.pdb")
-        os.rename(source, dest)
-        source_WT = os.path.join(path, f"WT_{protein}_{i+1}.pdb")
-        dest_WT = os.path.join(path, f"WT_{protein}_{x}.pdb")
-        os.rename(source_WT, dest_WT)
+    for i, mutation in enumerate(mutations_list):
+        if use_mp:
+            # Rename and move, assume we're in path/position, move pdb files to path
+            parent_path = parent_path = os.path.split(path)[0]
+            source = os.path.join(path, f"{protein}_{i+1}.pdb")
+            dest = os.path.join(parent_path, f"{protein}_{mutation}.pdb")
+            os.rename(source, dest)
+        else:
+            # Rename file according to mutation
+            source = os.path.join(path, f"{protein}_{i+1}.pdb")
+            dest = os.path.join(path, f"{protein}_{mutation}.pdb")
+            os.rename(source, dest)
+        # Delete corresponding WT file
+        WT_file = os.path.join(path, f"WT_{protein}_{i+1}.pdb")
+        os.remove(WT_file)
+    # Delete all other resulting FoldX files, config and ind_list
+    file_names = [f"Average_{protein}_{prefix}_{protein}.fxout",
+                  f"config_{protein}_{prefix}.cfg",
+                  f"Dif_{protein}_{prefix}_{protein}.fxout",
+                  f"individual_list_{prefix}.txt",
+                  f"PdbList_{protein}_{prefix}_{protein}.fxout",
+                  f"Raw_{protein}_{prefix}_{protein}.fxout"]
+    to_delete = [os.path.join(path, file) for file in file_names]
+    for file in to_delete:
+        os.remove(file)
+    if use_mp:
+        # Delete leftover empty dir
+        os.rmdir(path)
     return
 
 def IndList(path, prefix, mutation_list):
@@ -113,16 +137,16 @@ def IndList(path, prefix, mutation_list):
     indlist.close()
     return
 
-def ConfigFile(path, protein, prefix):
+def ConfigFile(protein_path, out_path, protein, prefix):
     """Write config file."""
-    file = os.path.join(path, f"config_{protein}_{prefix}.cfg")
+    file = os.path.join(out_path, f"config_{protein}_{prefix}.cfg")
     config = open(file, "w+")
     config.write("command=BuildModel\n")
     config.write(f"pdb={protein}.pdb\n")
-    config.write(f"pdb-dir = {path}\n")
-    ind_list = os.path.join(path, f"individual_list_{prefix}.txt")
+    config.write(f"pdb-dir = {protein_path}\n")
+    ind_list = os.path.join(out_path, f"individual_list_{prefix}.txt")
     config.write(f"mutant-file={ind_list}\n")
-    config.write(f"output-dir={path}\n")
+    config.write(f"output-dir={out_path}\n")
     config.write(f"output-file={protein}_{prefix}\n")
     config.close()
     return
