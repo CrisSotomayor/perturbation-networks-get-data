@@ -76,7 +76,7 @@ def GetMutations(path, protein, mutations, foldx_path, out_path=None, use_mp=Non
             # Since output FoldX files are named protein_i, we need to store
             # them separately so they don't overwrite each other
             current_path = os.path.join(out_path, position)
-            os.makedirs(current_path)
+            os.makedirs(current_path, exist_ok=True)
             IndList(current_path, position, mutations[position])
             ConfigFile(path, current_path, protein, position)
         with mp.Manager() as manager:
@@ -157,7 +157,6 @@ if __name__ == '__main__':
     # Path where original pdb and foldx software are stored
     path = os.path.join(home_path, protein)
     foldx_path = os.path.join(home_path, "foldx/foldx")
-
     pdb_file = os.path.join(path, f"{protein}.pdb")
-    mutations = MutationsDict(pdb_file, [('A', 32, 263), ('B', 32, 263)])
-    GetMutations(path, protein, mutations, foldx_path, use_mp=30)
+    mutations = MutationsDict(pdb_file, positions=[('A', 32, 263), ('B', 32, 263)])
+    GetMutations(path, protein, mutations, foldx_path, out_path=path, use_mp=30)
