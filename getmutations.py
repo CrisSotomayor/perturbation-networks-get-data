@@ -3,7 +3,8 @@ import subprocess
 import shutil
 import Bio.PDB
 import Bio.PDB.Polypeptide as pp
-import biographs as bg
+#import biographs as bg
+import iterate as it
 import multiprocessing as mp
 
 def MutationsDict(file, positions=None):
@@ -25,7 +26,7 @@ def MutationsDict(file, positions=None):
     # Sorted list of one letter amino acids
     AA = list(Bio.PDB.Polypeptide.aa1)
     # Generate model of original pdb file
-    model = bg.Pmolecule(file).model
+    model = it.Pmolecule(file).model
     # Dict to store mutations
     mutations = dict()
 
@@ -91,7 +92,6 @@ def GetMutations(path, protein, mutations, foldx_path, out_path=None, use_mp=Non
             Mutate(out_path, protein, position, mutations[position], foldx_path, use_mp=False)
     return
 
-
 def Mutate(path, protein, prefix, mutations_list, foldx_path, use_mp=True):
     """Call FoldX BuildModel through config_file, rename resulting .pdb files,
     delete files not needed."""
@@ -150,3 +150,14 @@ def ConfigFile(protein_path, out_path, protein, prefix):
     config.write(f"output-file={protein}_{prefix}\n")
     config.close()
     return
+
+if __name__ == '__main__':
+    protein = '4bz3'
+    home_path = os.path.join(os.getenv("HOME"), "perturbation_networks")
+    # Path where original pdb and foldx software are stored
+    path = os.path.join(home_path, protein)
+    foldx_path = os.path.join(home_path, "foldx")
+
+    pdb_file = os.path.join(path, f"{protein}.pdb")
+    mutations = MutationsDict(pdb_file, [('A', 32, 263), ('B', 32, 263)])
+    GetMutations(path, protein, mutations, foldx_path, use_mp=30)
