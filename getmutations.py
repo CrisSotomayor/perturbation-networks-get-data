@@ -156,7 +156,7 @@ if __name__ == '__main__':
     home_path = os.path.join(os.getenv("HOME"), "perturbation_networks")
     # Path where original pdb and foldx software are stored
     path = os.path.join(home_path, protein)
-    foldx_path = os.path.join(home_path, "foldx")
+    foldx_path = os.path.join(home_path, "foldx/foldx")
 
     pdb_file = os.path.join(path, f"{protein}.pdb")
     mutations = MutationsDict(pdb_file, [('A', 32, 263), ('B', 32, 263)])
