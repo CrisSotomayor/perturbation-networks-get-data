@@ -29,18 +29,27 @@ def MutationsDict(file, positions=None):
     model = it.Pmolecule(file).model
     # Dict to store mutations
     mutations = dict()
-
-    for chain_id, first, last in positions:
-        # Get chain corresponding to chain_id given
-        chain = next(chain for chain in model.get_chains() if chain.id == chain_id)
-        for residue in chain:
-            if pp.is_aa(residue):
-                code = pp.three_to_one(residue.get_resname())
-                position = residue.id[1]
-                prefix = code+chain_id+str(position)
-                # Only save positions between first and last
-                if position in range(first, last +1):
-                        mutations[prefix] = [prefix+aa for aa in AA if aa!=code]
+    if positions:
+        for chain_id, first, last in positions:
+            # Get chain corresponding to chain_id given
+            chain = next(chain for chain in model.get_chains() if chain.id == chain_id)
+            for residue in chain:
+                if pp.is_aa(residue):
+                    code = pp.three_to_one(residue.get_resname())
+                    position = residue.id[1]
+                    prefix = code+chain_id+str(position)
+                    # Only save positions between first and last
+                    if position in range(first, last +1):
+                            mutations[prefix] = [prefix+aa for aa in AA if aa!=code]
+    else:
+        for chain in model.get_chains():
+            for residue in chain:
+                if pp.is_aa(residue):
+                    code = pp.three_to_one(residue.get_resname())
+                    position = residue.id[1]
+                    chain_id = chain.id
+                    prefix = code+chain_id+str(position)
+                    mutations[prefix] = [prefix+aa for aa in AA if aa!=code]
     return mutations
 
 def GetMutations(path, protein, mutations, foldx_path, out_path=None, use_mp=None):
@@ -152,11 +161,11 @@ def ConfigFile(protein_path, out_path, protein, prefix):
     return
 
 if __name__ == '__main__':
-    protein = '4bz3'
+    protein = '1d5r'
     home_path = os.path.join(os.getenv("HOME"), "perturbation_networks")
     # Path where original pdb and foldx software are stored
     path = os.path.join(home_path, protein)
     foldx_path = os.path.join(home_path, "foldx/foldx")
     pdb_file = os.path.join(path, f"{protein}.pdb")
-    mutations = MutationsDict(pdb_file, positions=[('A', 32, 263), ('B', 32, 263)])
+    mutations = MutationsDict(pdb_file)
     GetMutations(path, protein, mutations, foldx_path, out_path=path, use_mp=30)
