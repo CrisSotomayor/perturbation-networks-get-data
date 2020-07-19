@@ -12,7 +12,7 @@ from Bio.PDB import MMCIFParser, PDBParser, Selection, NeighborSearch
 import Bio.PDB.Polypeptide as pp
 
 # Code from biographs bpdb.py
-def pdb_model(structure_file, water=False, ions=False):
+def pdb_model(structure_file, water=False, check_residues=True):
     """Return a biopython [1] model entity from a structure file.
 
     Parameters
@@ -22,8 +22,8 @@ def pdb_model(structure_file, water=False, ions=False):
     water: boolean (default=False)
         True to take into account water molecules in the structure, False
         otherwise.
-    ions: boolean (default=False)
-        If False, removes all residues that are not standard amino acids.
+    check_residues: boolean (default=True)
+        If True, removes all residues that are not standard amino acids.
 
     Notes
     -----
@@ -55,12 +55,15 @@ def pdb_model(structure_file, water=False, ions=False):
             if not list(chain):
                 model.detach_child(chain.id)
 
-    if not ions:
+    if check_residues:
         for chain in model.get_chains():
             for residue in list(chain):
                 # FoldX removes hetatom flags, remove leftover ions and non standard
                 # amino acids
                 if not pp.is_aa(residue, standard=True):
+                    chain.detach_child(residue.id)
+                # Fix for issue where single N atom is read as aa
+                elif len(residue.get_unpacked_list()) == 1:
                     chain.detach_child(residue.id)
             if not list(chain):
                 model.detach_child(chain.id)
@@ -188,8 +191,8 @@ class Pmolecule(object):
         structure-file formats are supported: `pdb', `cif', and `ent'.
     water : boolean, (default: False)
         If False, water molecules are removed.
-    ions : boolean, (default: False)
-        If False, ions are removed.
+    check_residues : boolean, (default: True)
+        If True, removes all residues that are not standard amino acids.
 
     Attributes
     ----------
@@ -202,9 +205,9 @@ class Pmolecule(object):
         The path to the structural file used to instantiate the class.
     """
 
-    def __init__(self, structure_file, water=False, ions=False):
+    def __init__(self, structure_file, water=False, check_residues=True):
 
-        self.model = pdb_model(structure_file, water=water, ions=ions)
+        self.model = pdb_model(structure_file, water=water, check_residues=check_residues)
         self.path_to_file = structure_file
 
     def __len__(self):
