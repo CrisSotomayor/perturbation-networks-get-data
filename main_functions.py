@@ -3,7 +3,7 @@
 
 
 import os
-import numpy
+import numpy as np
 import scipy as sp
 import pandas as pd
 import biographs as bg
@@ -13,8 +13,23 @@ import Bio.PDB.Polypeptide as pp
 from collections import Counter
 
 
+# Some global variables
+AA = list(pp.aa1)
+proteins = ['1be9', '1d5r', '1nd4', '3dqw', '4bz3']
+protein_names = ['PSD95', 'PTEN', 'APH(3\')II', 'Src CD', 'VIM-2']
+measures = ['nodes', 'edges', 'weight', 'distance']
 
-def ReadNetworkCSV(protein, threshold, measure, data_path='data/path'):
+
+# Get functional data
+# Import processed functional data as DataFrames, all files have ordered AA list
+# as index, positions as columns. Save data in functional_data.
+functional_data = dict()
+for protein in proteins:
+    csv_file = os.path.join('data', f'functional_{protein}.csv')
+    functional_data[protein] = pd.read_csv(csv_file, index_col=0, header=0)
+
+
+def ReadNetworkCSV(protein, threshold, measure, data_path='data/structure'):
     """Return DataFrame from corresponding CSV.
 
     If protein has multiple identical chains, return average value
